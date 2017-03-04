@@ -27,7 +27,6 @@ output:
   filename <- paste0(output, "claimsMonthYear.csv")
   claimsMonthYear <- read.csv(filename, stringsAsFactors = FALSE)
 
-  
   filename <- paste0(output, "claimType.csv")
   claimType <- read.csv(filename, stringsAsFactors = FALSE)
   
@@ -54,6 +53,7 @@ Row
 ### Claims per year
 
 ```{r}
+
   graphData <- claimsYear
   plot_ly(graphData, x=accidentYear, y=claims, type="bar") %>%
     layout(xaxis=list(title=""))
@@ -99,7 +99,7 @@ Row
 Row 
 -----------------------------------------------------------------------
 
-### Claim Types from Jan 2016
+### Claim Types from Jan 2015
 
 ```{r}
 
@@ -113,7 +113,7 @@ Row
 
 ```
 
-### Claim Fault Types from Jan 2016
+### Claim Fault Types from Jan 2015
 
 ```{r}
 
@@ -131,7 +131,7 @@ Row
 Row 
 -----------------------------------------------------------------------
 
-### Collision Type since Jan 2016
+### Collision Type since Jan 2015
 
 ```{r}
 
@@ -145,7 +145,7 @@ Row
 
 ```
 
-### Collision Type x Fault since Jan 2016
+### Collision Type x Fault since Jan 2015
 
 ```{r}
 
@@ -156,7 +156,7 @@ Row
            hovermode="closest",
            margins=list(l=150),
            yaxis=list(title=""),
-           xaxis=list(title="number of claims"))
+           xaxis=list(title="Claims"))
 
 ```
 
@@ -164,7 +164,7 @@ Row
 Row 
 -----------------------------------------------------------------------
 
-### Top routes by claim since Jan 2016
+### Top routes by claim since Jan 2015
 
 ```{r}
 
@@ -174,12 +174,13 @@ Row
   
   plot_ly(graphData, x=bus, y=nClaims, type="bar") %>%
     layout(xaxis=list(title=""),
+           yaxis=list(title="Claims"),
            margins=list(b=50))
 
 
 ```
 
-### Route Fault Type- Top routes by claim since Jan 2016
+### Route Fault Type- Top routes by claim since Jan 2015
 
 ```{r}
 
@@ -188,30 +189,11 @@ Row
   plot_ly(graphData, x=bus, y=nClaims, color=Fault.Descrip, type="bar") %>%
     layout(barmode="stack",
            xaxis=list(title=""),
-           yaxis=list(title="Claims from Jan 2016"),
+           yaxis=list(title="Claims"),
            margins=list(b=50))
 
 
 ```
 
 
-
-Row 
------------------------------------------------------------------------
-
-### Title
-
-```{r}
-
-
-
-```
-
-### Title
-
-```{r}
-
-
-
-```
 

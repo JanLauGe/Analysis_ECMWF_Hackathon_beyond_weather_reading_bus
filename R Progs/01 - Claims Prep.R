@@ -74,11 +74,11 @@
   #   filter(year(accidentDate) >= 2016)
   # plot_ly(graphData, x=accidentDate, y=claims, type="scatter")
   
-#2016 data only 
+#Data from Jan 2015
   
   #claim type
   claimType <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     group_by(Accident.Descrip) %>%
     summarise(nClaims=n()) %>%
     ungroup() %>%
@@ -99,7 +99,7 @@
     
   #Collision faults
   faultType <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     filter(Accident.Descrip == "Collision with") %>%
     group_by(Fault.Descrip) %>%
     summarise(nClaims=n()) %>%
@@ -122,7 +122,7 @@
   
   #Collision description
   collisionType <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     filter(Accident.Descrip == "Collision with") %>%
     group_by(Collision.Description) %>%
     summarise(nClaims=n()) %>%
@@ -144,7 +144,7 @@
 
   #Collision description x fault
   collisionTypeFault <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     filter(Accident.Descrip == "Collision with") %>%
     group_by(Collision.Description, Fault.Descrip) %>%
     summarise(nClaims=n()) 
@@ -163,7 +163,7 @@
   
   #routes
   routeRecent <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     group_by(routeNo) %>%
     summarise(nClaims=n()) %>%
     arrange(-nClaims) %>%
@@ -172,7 +172,9 @@
            cumPctRoutes=rank/max(rank),
            pctClaims=nClaims/sum(nClaims),
            cumPctClaims=cumsum(pctClaims))
-  
+
+  #sum(routeRecent$nClaims)
+    
   graphData <- routeRecent
   plot_ly(graphData, x=cumPctRoutes, y=cumPctClaims, mode="markers")
   
@@ -193,17 +195,19 @@
   #route x fault
   glimpse(claims)
   routeFault <- claims %>%
-    filter(accidentYear >= 2016) %>%
+    filter(accidentYear >= 2015) %>%
     filter(routeNo %in% topRoutes$routeNo) %>%
     group_by(routeNo, Fault.Descrip) %>%
     summarise(nClaims=n())
     
+  sum(routeFault$nClaims)
+  
   graphData <- routeFault %>%
     mutate(bus=paste0("R", routeNo))
   plot_ly(graphData, x=bus, y=nClaims, color=Fault.Descrip, type="bar") %>%
     layout(barmode="stack",
            xaxis=list(title=""),
-           yaxis=list(title="Claims from Jan 2016"))
+           yaxis=list(title="Claims from Jan 2015"))
   
   filename <- paste0(output, "routeFault.csv")
   write.csv(routeFault, filename)

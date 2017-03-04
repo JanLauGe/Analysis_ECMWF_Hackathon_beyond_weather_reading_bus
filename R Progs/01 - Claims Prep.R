@@ -41,7 +41,10 @@
   
   graphData <- claimsYear
   plot_ly(graphData, x=accidentYear, y=claims, type="bar")
-  
+
+  filename <- paste0(output, "claimsYear.csv")
+  write.csv(claimsYear, filename)
+    
   claimsMonthYear <- claims %>%
     group_by(accidentMonthYear, accidentMonth, accidentYear) %>%
     summarise(claims=n()) %>%
@@ -52,6 +55,10 @@
 
   graphData <- claimsMonthYear
   plot_ly(graphData, x=accidentMonthYear, y=claims, type="scatter")
+  
+  filename <- paste0(output, "claimsMonthYear.csv")
+  write.csv(claimsMonthYear, filename)
+  
   
   graphData <- claimsMonthYear
   plot_ly(graphData, x=accidentMonth, y=claims, group=accidentYear, type="scatter")
@@ -86,7 +93,10 @@
     layout(yaxis=list(title=""),
            xaxis=list(title="% Claims"),
            margins=list(l=100))
-  
+
+  filename <- paste0(output, "claimType.csv")
+  write.csv(claimType, filename)
+    
   #Collision faults
   faultType <- claims %>%
     filter(accidentYear >= 2016) %>%
@@ -106,6 +116,10 @@
            xaxis=list(title="% Claims"),
            margins=list(l=150))
 
+  filename <- paste0(output, "faultType.csv")
+  write.csv(faultType, filename)
+  
+  
   #Collision description
   collisionType <- claims %>%
     filter(accidentYear >= 2016) %>%
@@ -124,6 +138,9 @@
     layout(yaxis=list(title=""),
            xaxis=list(title="% Collisions"),
            margins=list(l=150))
+  
+  filename <- paste0(output, "collisionType.csv")
+  write.csv(collisionType, filename)
 
   #Collision description x fault
   collisionTypeFault <- claims %>%
@@ -140,6 +157,9 @@
            margins=list(l=150),
            yaxis=list(title=""),
            xaxis=list(title="number of claims"))
+  
+  filename <- paste0(output, "collisionTypeFault.csv")
+  write.csv(collisionTypeFault, filename)
   
   #routes
   routeRecent <- claims %>%
@@ -159,8 +179,12 @@
   graphData <- routeRecent  %>%
     filter(rank <= 20) %>%
     mutate(bus=paste0("R", routeNo))
+  
   plot_ly(graphData, x=bus, y=nClaims, type="bar") %>%
     layout(xaxis=list(title=""))
+  
+  filename <- paste0(output, "routeRecent.csv")
+  write.csv(routeRecent, filename)
   
   topRoutes <- routeRecent  %>%
     filter(rank <= 20) %>%
@@ -181,4 +205,6 @@
            xaxis=list(title=""),
            yaxis=list(title="Claims from Jan 2016"))
   
+  filename <- paste0(output, "routeFault.csv")
+  write.csv(routeFault, filename)
   

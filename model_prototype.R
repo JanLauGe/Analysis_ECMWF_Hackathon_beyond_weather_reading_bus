@@ -101,28 +101,28 @@ envidata_orig <- read_rds('D:/projects/ecmwf/evidata.rds') %>%
 #     by = c('v00h_dates' = 'v18h_dates')) %>%
 
 envidata <- envidata_orig %>%
-  select(dates) %>% unique %>%
+  dplyr::select(dates) %>% unique %>%
   # 6 am data
   left_join(
     envidata_orig %>%
       filter(hour(timestamp) == 6 | hour(timestamp) == 7) %>%
       set_colnames(str_c('v06h_', colnames(.))) %>%
-      select(-v06h_timestamp),
-    by = c('dates' = 'v06h_dates')) %>%
-  # 12 pm data
-  left_join(
-    envidata_orig %>%
-      filter(hour(timestamp) == 12 | hour(timestamp) == 13) %>%
-      set_colnames(str_c('v12h_', colnames(.))) %>%
-      select(-v12h_timestamp),
-    by = c('dates' = 'v12h_dates')) %>%
-  # 6 pm data
-  left_join(
-    envidata_orig %>%
-      filter(hour(timestamp) == 18 | hour(timestamp) == 19) %>%
-      set_colnames(str_c('v18h_', colnames(.))) %>%
-      select(-v18h_timestamp),
-    by = c('dates' = 'v18h_dates'))
+      dplyr::select(-v06h_timestamp),
+    by = c('dates' = 'v06h_dates')) #%>%
+  # # 12 pm data
+  # left_join(
+  #   envidata_orig %>%
+  #     filter(hour(timestamp) == 12 | hour(timestamp) == 13) %>%
+  #     set_colnames(str_c('v12h_', colnames(.))) %>%
+  #     dplyr::select(-v12h_timestamp),
+  #   by = c('dates' = 'v12h_dates')) %>%
+  # # 6 pm data
+  # left_join(
+  #   envidata_orig %>%
+  #     filter(hour(timestamp) == 18 | hour(timestamp) == 19) %>%
+  #     set_colnames(str_c('v18h_', colnames(.))) %>%
+  #     dplyr::select(-v18h_timestamp),
+  #   by = c('dates' = 'v18h_dates'))
 
 modeldata <- modeldata %>%
   # Join to original bus data
@@ -145,18 +145,19 @@ kfolds <- createFolds(modeldata$claims, k = 3)
 
 # Get test and train dataset
 data_train <- modeldata[-kfolds[[3]],] %>%
-  select(-matches('timestamp'), -matches('dates'))
+  dplyr::select(-matches('timestamp'), -matches('dates'))
 data_test <- modeldata[kfolds[[3]],] %>%
   select(-matches('timestamp'), -matches('dates'))
 
-# Create dummify formula
-dummify <- dummyVars(claims ~ ., data = data_train)
-# And apply it to train and test set
-data_train_dummy <- predict(dummify, newdata = data_train)
-data_train_claims <- data_train$claims
-
-data_test_dummy <- predict(dummify, newdata = data_test)
-data_test_claims <- data_test$claims
+# # Create dummify formula
+# dummify <- dummyVars(claims ~ ., data = data_train)
+# # And apply it to train and test set
+# data_train_dummy <- predict(dummify, newdata = data_train)
+# data_train_claims <- data_train$claims
+# data_train <- data_train %>% select(-claims)
+# 
+# data_test_dummy <- predict(dummify, newdata = data_test)
+# data_test_claims <- data_test$claims
 
 
 # Run the model ----------------------------------------------------------------------------------------
@@ -173,9 +174,8 @@ mod_eval <- trainControl(
   verboseIter = TRUE,
   summaryFunction = twoClassSummary)
 mod_train <- caret::train(
-  x = data_train_dummy,
-  y = data_train_claims,
-  data = data_train_dummy,
+  claims ~ .,
+  data = data_train,
   method = "glmnet",
   family = "binomial",
   metric = "ROC",
@@ -184,14 +184,15 @@ mod_train <- caret::train(
 
 
 write_rds(mod_train, path = 'D:/projects/ecmwf/trained_big.rds')
-
+varImp(mod_train) %>% plot(scale = FALSE)
+plot(varImp(mod_train, scale = FALSE))
+     
 mod_pred <- predict(mod_train, newdata = data_test, type = 'prob')
-mod_pred_val <- bind_cols(mod_pred, data_test) %>% 
-  select(yes, claims)
+mod_pred_val <- bind_cols(mod_pred, data_test) %>% select(yes, claims)
 
-ModelMetrics::auc(actual = mod_pred2$claims, predicted = mod_pred$yes)
+ModelMetrics::auc(actual = mod_pred_val$claims, predicted = mod_pred_val$yes)
 
 library(AUC)
-roc()
+roc(mod_pred_val$yes, mod_pred_val$claims) %>% plot
 
 

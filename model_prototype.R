@@ -77,36 +77,63 @@ modeldata %>%
 
 # Get weather data
 envidata_orig <- read_rds('D:/projects/ecmwf/evidata.rds') %>%
-  mutate(dates = timestamp %>% as.Date)
+  mutate(dates = timestamp %>% as.Date) %>%
+  unique
   
-envidata <- full_join(
-  # Get different time stamps
-  envidata_orig %>%
-    filter(hour(timestamp) == 0 | hour(timestamp) == 1) %>%
-    set_colnames(str_c('v00h_', colnames(.))),
-  envidata_orig %>%
-    filter(hour(timestamp) == 6 | hour(timestamp) == 7) %>%
-    set_colnames(str_c('v06h_', colnames(.))), 
-  by = c('v00h_dates' = 'v06h_dates')) %>%
-  full_join(
+# envidata <- full_join(
+#   # Get different time stamps
+#   envidata_orig %>%
+#     filter(hour(timestamp) == 0 | hour(timestamp) == 1) %>%
+#     set_colnames(str_c('v00h_', colnames(.))),
+#   envidata_orig %>%
+#     filter(hour(timestamp) == 6 | hour(timestamp) == 7) %>%
+#     set_colnames(str_c('v06h_', colnames(.))), 
+#   by = c('v00h_dates' = 'v06h_dates')) %>%
+#   full_join(
+#     envidata_orig %>%
+#       filter(hour(timestamp) == 12 | hour(timestamp) == 13) %>%
+#       set_colnames(str_c('v12h_', colnames(.))),
+#     by = c('v00h_dates' = 'v12h_dates')) %>%
+#   full_join(
+#     envidata_orig %>%
+#       filter(hour(timestamp) == 18 | hour(timestamp) == 19) %>%
+#       set_colnames(str_c('v18h_', colnames(.))),
+#     by = c('v00h_dates' = 'v18h_dates')) %>%
+
+envidata <- envidata_orig %>%
+  select(dates) %>% unique %>%
+  # 6 am data
+  left_join(
+    envidata_orig %>%
+      filter(hour(timestamp) == 6 | hour(timestamp) == 7) %>%
+      set_colnames(str_c('v06h_', colnames(.))) %>%
+      select(-v06h_timestamp),
+    by = c('dates' = 'v06h_dates')) %>%
+  # 12 pm data
+  left_join(
     envidata_orig %>%
       filter(hour(timestamp) == 12 | hour(timestamp) == 13) %>%
-      set_colnames(str_c('v12h_', colnames(.))),
-    by = c('v00h_dates' = 'v12h_dates')) %>%
-  full_join(
+      set_colnames(str_c('v12h_', colnames(.))) %>%
+      select(-v12h_timestamp),
+    by = c('dates' = 'v12h_dates')) %>%
+  # 6 pm data
+  left_join(
     envidata_orig %>%
       filter(hour(timestamp) == 18 | hour(timestamp) == 19) %>%
-      set_colnames(str_c('v18h_', colnames(.))),
-    by = c('v00h_dates' = 'v18h_dates')) %>%
+      set_colnames(str_c('v18h_', colnames(.))) %>%
+      select(-v18h_timestamp),
+    by = c('dates' = 'v18h_dates'))
+
+modeldata <- modeldata %>%
   # Join to original bus data
-  full_join(modeldata, by = c('v00h_dates' = 'dates')) %>%
+  left_join(envidata, by = c('dates' = 'dates')) %>%
   # Change flag variable
   mutate(claims = ifelse(claims > 0, 'yes', 'no') %>% factor,
          # Change route variable
          route = route %>% factor,
          # Get weekday
-         weekday = v00h_dates %>% weekdays %>% factor,
-         year = v00h_dates %>% year %>% factor) %>%
+         weekday = dates %>% weekdays %>% factor,
+         year = dates %>% year %>% factor) %>%
   # Keep only complete cases
   filter(complete.cases(.))
 
@@ -114,12 +141,12 @@ envidata <- full_join(
 # Data subsets and dummy variables ----------------------------------------------------------------------
 
 set.seed(2345)
-kfolds <- createFolds(envidata$claims, k = 3)
+kfolds <- createFolds(modeldata$claims, k = 3)
 
 # Get test and train dataset
-data_train <- envidata[-kfolds[[3]],] %>%
+data_train <- modeldata[-kfolds[[3]],] %>%
   select(-matches('timestamp'), -matches('dates'))
-data_test <- envidata[kfolds[[3]],] %>%
+data_test <- modeldata[kfolds[[3]],] %>%
   select(-matches('timestamp'), -matches('dates'))
 
 # Create dummify formula
@@ -128,13 +155,11 @@ dummify <- dummyVars(claims ~ ., data = data_train)
 data_train_dummy <- predict(dummify, newdata = data_train)
 data_train_claims <- data_train$claims
 
-data_test_dummy <- predict(dummify, newdata = data_test) %>%
+data_test_dummy <- predict(dummify, newdata = data_test)
 data_test_claims <- data_test$claims
 
 
 # Run the model ----------------------------------------------------------------------------------------
-
-#data_train_dummy2 <- data_train_dummy[1:1000,]
 
 # Train glmnet model
 mod_tune <- expand.grid(

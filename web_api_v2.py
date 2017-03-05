@@ -5,7 +5,7 @@ server = ECMWFDataServer(url="https://api.ecmwf.int/v1",
                          key=input("Enter Web API key: "), 
                          email="laurensgeffert@gmail.com")
 
-years = range(2002, 2016, 1)
+years = range(2002, 2017, 1)
 for year in years:
     server.retrieve({
         "class": "ei",

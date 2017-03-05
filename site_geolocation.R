@@ -1,7 +1,7 @@
 library(tidyverse)
 library(jsonlite)
 
-setwd('C:/Users/Laurens/Dropbox/projects/ecmwf/code/ReadingBus/')
+setwd('C:/Users/Laurens/Dropbox/projects/ecmwf/code/ReadingBus/Data')
 
 # Getting locations from claims data
 claims <- read_csv('busClaims.csv')
@@ -29,5 +29,24 @@ geocodeAdddress <- function(location) {
   out
 }
 
-geocodeAdddress("Time Square, New York City")
+
+# Test the function
 geocodeAdddress(paste0(claimsloc[1], ', Reading'))
+
+# Run for all unique elements
+all_locs <- lapply(
+  X = unique(claimsloc)[1:10],
+  FUN = function(x) 
+    geocodeAdddress(paste0(x, ', Reading')))
+
+
+# Reshape into data frame
+claimsloc_geo <- data_frame(
+  name = colnames(all_locs),
+  lat = all_locs[2,],
+  lon = all_locs[1,])
+
+# Join back onto claims
+bla <- left_join(claims,
+          claimsloc_geo,
+          by = c('Place of Event' = 'name'))

@@ -17,10 +17,11 @@ load_ncdf <- function(year) {
   # Open file
   ncdffile <- nc_open(paste0(year,'.nc'), write=FALSE)
 
+  nvals <- length(ncdffile$dim[[3]]$vals)
   # Number of variables to extract from ncdf
   nvars <- length(ncdffile$var)
   # Output data frame shape
-  envidata <- as_data_frame(matrix(rep(0, times = 1460 * nvars), ncol = nvars))
+  envidata <- as_data_frame(matrix(rep(0, times = nvals * nvars), ncol = nvars))
   varnames <- NULL
   
   for(i in 1:nvars){
@@ -100,13 +101,15 @@ years <- seq(2001, 2016, 1)
 for(year in years){
   thisyear <- load_ncdf(year)
   if(exists('total')){
-    bind_rows(total, thisyear)
+    total <- bind_rows(total, thisyear)
   }else{
     total <- thisyear
   }
 }
 
-  
+# Check the result
+head(total)
 
-
+write_csv(total, path = 'D:/projects/ecmwf/evidata.csv')
+write_rds(total, path = 'D:/projects/ecmwf/evidata.rds')
 
